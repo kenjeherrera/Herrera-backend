@@ -9,7 +9,7 @@ const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
   sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
-  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+  maxAge: 7 * 24 * 60 * 60 * 1000,
 };
 
 // ── REGISTER ──────────────────────────────────────────────────────────────────
@@ -19,12 +19,11 @@ async function register(req, res) {
 
     const existing = await Account.findOne({ where: { email } });
     if (existing) {
-      // Don't reveal if email exists — silently succeed (send nothing)
       return res.json({ message: 'Registration successful. Please check your email.' });
     }
 
     const accountCount = await Account.count();
-    const role = accountCount === 0 ? 'Admin' : 'User'; // First account = Admin
+    const role = accountCount === 0 ? 'Admin' : 'User';
 
     const passwordHash = await bcrypt.hash(password, 10);
     const verificationToken = uuidv4();
@@ -76,7 +75,7 @@ async function login(req, res) {
     const ipAddress = req.ip;
 
     const account = await Account.findOne({ where: { email } });
-    if (!account || !account.isActive) {
+    if (!account) {
       return res.status(400).json({ message: 'Email or password is incorrect.' });
     }
 
@@ -123,7 +122,6 @@ async function refreshToken(req, res) {
 
     const account = await Account.findByPk(storedToken.accountId);
 
-    // Rotate refresh token
     const newRefreshToken = await generateRefreshToken(account, ipAddress);
     storedToken.revoked = new Date();
     storedToken.revokedByIp = ipAddress;
@@ -176,13 +174,12 @@ async function forgotPassword(req, res) {
     const { email } = req.body;
     const account = await Account.findOne({ where: { email } });
 
-    // Always return success to avoid email enumeration
     if (!account) {
       return res.json({ message: 'If that email exists, a reset link has been sent.' });
     }
 
     account.resetToken = uuidv4();
-    account.resetTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    account.resetTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await account.save();
 
     const origin = process.env.FRONTEND_URL || req.headers.origin;
