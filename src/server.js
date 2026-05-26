@@ -7,7 +7,9 @@ const app = express();
 
 const allowedOrigins = [
   'https://herrera-intprog-final-frontend.onrender.com',
-  'http://localhost:4200'
+  'https://herrera-backend.onrender.com',
+  'http://localhost:4200',
+  'http://localhost:4000'
 ];
 
 app.use(cors({
